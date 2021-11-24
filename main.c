@@ -1,15 +1,31 @@
-#include "lvgl/lvgl.h"
-#include "lv_drivers/display/fbdev.h"
-#include "lv_demos/lv_demo.h"
-#include <unistd.h>
+#include <fcntl.h>
+#include <linux/kd.h>
 #include <pthread.h>
-#include <time.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
+
+#include "lv_drivers/display/fbdev.h"
+#include "lv_drivers/indev/evdev.h"
+#include "lvgl/examples/widgets/lv_example_widgets.h"
+#include "lvgl/lvgl.h"
 
 #define DISP_BUF_SIZE (128 * 1024)
 
+void disable_cursor(void)
+{
+    int fd = open("/dev/ttyGS0", O_RDWR);
+    ioctl(fd, KDSETMODE, KD_GRAPHICS);
+    close(fd);
+}
+
 int main(void)
 {
+    disable_cursor();
+
     /*LittlevGL init*/
     lv_init();
 
@@ -28,12 +44,21 @@ int main(void)
     lv_disp_drv_init(&disp_drv);
     disp_drv.draw_buf   = &disp_buf;
     disp_drv.flush_cb   = fbdev_flush;
-    disp_drv.hor_res    = 800;
-    disp_drv.ver_res    = 480;
+    disp_drv.hor_res    = 480;
+    disp_drv.ver_res    = 272;
     lv_disp_drv_register(&disp_drv);
 
-    /*Create a Demo*/
-    lv_demo_widgets();
+    evdev_init();
+    static lv_indev_drv_t indev_drv;
+    lv_indev_drv_init(&indev_drv);      /*Basic initialization*/
+    indev_drv.type = LV_INDEV_TYPE_POINTER;
+    indev_drv.read_cb = evdev_read;
+
+    /*Register the driver in LVGL and save the created input device object*/
+    lv_indev_drv_register(&indev_drv);
+
+    /* Run one of the examples. */
+    lv_example_slider_3();
 
     /*Handle LitlevGL tasks (tickless mode)*/
     while(1) {
