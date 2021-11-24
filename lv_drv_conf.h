@@ -14,6 +14,8 @@
 
 #include "lv_conf.h"
 
+#define USE_XKB		0
+
 /*********************
  * DELAY INTERFACE
  *********************/
