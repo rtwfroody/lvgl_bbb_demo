@@ -15,17 +15,8 @@
 
 #define DISP_BUF_SIZE (128 * 1024)
 
-void disable_cursor(void)
-{
-    int fd = open("/dev/ttyGS0", O_RDWR);
-    ioctl(fd, KDSETMODE, KD_GRAPHICS);
-    close(fd);
-}
-
 int main(void)
 {
-    disable_cursor();
-
     /*LittlevGL init*/
     lv_init();
 
